@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-validator",
+  "version": "0.1.23",
+  "description": "Independently validate the latest captured Codex activity in local projects.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "اعتبارسنجی مستقل",
+        "shortDescription": "بازبینی آخرین فعالیت Codex",
+        "longDescription": "مقایسهٔ درخواست، تغییرات و شواهد اجرای همان نوبت در یک پنل مستقل.",
+        "developerName": "Local Review Tools",
+        "category": "Productivity",
+        "capabilities": ["Interactive"]
+      }
+    }
+  }
+}

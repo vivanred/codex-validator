@@ -1,0 +1,37 @@
+{
+  "description": "Capture evidence for the active Codex turn in local workspaces.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {"hooks": [{
+        "type": "command",
+        "command": "python -I -B -c \"import os, runpy, sys; sys.path.insert(0, os.environ['PLUGIN_ROOT']); runpy.run_module('validate', run_name='__main__', alter_sys=True)\" --hook --panel-only",
+        "timeout": 60,
+        "statusMessage": "Capturing the starting state for validation"
+      }]}
+    ],
+    "PreToolUse": [
+      {"matcher": "^apply_patch$", "hooks": [{
+        "type": "command",
+        "command": "python -I -B -c \"import os, runpy, sys; sys.path.insert(0, os.environ['PLUGIN_ROOT']); runpy.run_module('validate', run_name='__main__', alter_sys=True)\" --hook --panel-only",
+        "timeout": 60,
+        "statusMessage": "Capturing files before the edit"
+      }]}
+    ],
+    "PostToolUse": [
+      {"matcher": "^(apply_patch|Bash)$", "hooks": [{
+        "type": "command",
+        "command": "python -I -B -c \"import os, runpy, sys; sys.path.insert(0, os.environ['PLUGIN_ROOT']); runpy.run_module('validate', run_name='__main__', alter_sys=True)\" --hook --panel-only",
+        "timeout": 180,
+        "statusMessage": "Checking the observed activity independently"
+      }]}
+    ],
+    "Stop": [
+      {"hooks": [{
+        "type": "command",
+        "command": "python -I -B -c \"import os, runpy, sys; sys.path.insert(0, os.environ['PLUGIN_ROOT']); runpy.run_module('validate', run_name='__main__', alter_sys=True)\" --hook --panel-only",
+        "timeout": 180,
+        "statusMessage": "Checking the completed Codex turn independently"
+      }]}
+    ]
+  }
+}

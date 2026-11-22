@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اعتبارسنجی مستقل</title>
+<style>
+  :root { color-scheme: light dark; font: 15px/1.65 Tahoma, system-ui, sans-serif; }
+  body { margin: 0; padding: 18px; color: CanvasText; background: Canvas; }
+  main { max-width: 48rem; margin-inline: auto; }
+  button, select { box-sizing: border-box; font: inherit; min-height: 42px; border-radius: 7px; }
+  button, select, details, article { border: 1px solid light-dark(#c3cad4, #4a5260); }
+  button { padding-inline: 12px; }
+  button[data-primary] { background: light-dark(#1d4382, #b9d2ff); color: light-dark(#fff, #102649); }
+  button:disabled { opacity: .56; }
+  select { padding: 5px 8px; min-width: 0; width: 100%; }
+  label { display: block; }
+  .row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+  .activity-heading { flex: 1 1 15rem; min-width: 0; }
+  details, article { padding: 12px; border-radius: 8px; }
+  details { margin-top: 12px; }
+  .model-controls { display: grid; gap: 8px; margin-top: 8px; }
+  h1, h2, p { margin: 0 0 6px; }
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1rem; }
+  ul { margin: 4px 0 12px; }
+  #notice { min-height: 1.65em; margin-top: 8px; }
+  #requirements { display: grid; gap: 8px; }
+  #report { margin-top: 13px; }
+  #overview-title { font-size: 1.12rem; }
+  #summary-facts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 10px; padding: 0; list-style: none;
+    color: light-dark(#465366, #b9c8da); font-size: .9rem; }
+  #summary-facts:empty { display: none; }
+  #summary-followup:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
+  #summary-followup-note { font-size: .9rem; overflow-wrap: anywhere; }
+  summary { cursor: pointer; overflow-wrap: anywhere; }
+  summary:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; border-radius: 3px; }
+  #summary-count, #full-report > summary, .report-section > summary { font-weight: 700; }
+  #full-report[open] > summary { margin-bottom: 8px; }
+  .report-section { margin-top: 6px; padding: 8px 10px; }
+  .report-section > summary, .item-evidence > summary { min-block-size: 26px; }
+  .section-count { margin-inline-start: 7px; font-weight: 400; color: light-dark(#465366, #b9c8da); }
+  .fold-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .fold-list details { margin: 0; padding: 6px 8px; }
+  .fold-list p, .evidence-body p { margin: 6px 0 0; }
+  .case-list, .file-list { max-block-size: 15rem; overflow: auto; }
+  .facts { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; margin: 8px 0 0; }
+  .facts dt { overflow-wrap: anywhere; }
+  .facts dd { margin: 0; }
+  #requirements h2 { overflow-wrap: anywhere; }
+  .item-status { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .item-status span { padding-inline: 8px; border-radius: 5px; background: light-dark(#eff3f8, #29313d); }
+  #requirements article[data-attention="true"] { border-inline-start: 3px solid light-dark(#9b5d16, #e8b474); }
+  .item-evidence { margin-top: 8px; padding: 0; border: 0; }
+  .item-evidence > summary { padding-block: 5px; font-weight: 700; color: light-dark(#1d4382, #b9d2ff); }
+  .evidence-body { margin: 4px 0 0; padding-inline-start: 9px; border-inline-start: 1px solid light-dark(#c3cad4, #4a5260); }
+  .evidence-body h3 { font-size: inherit; margin: 0; }
+  .evidence-body pre { box-sizing: border-box; max-block-size: 13rem; overflow: auto; margin: 6px 0 0;
+    padding: 6px; white-space: pre-wrap; overflow-wrap: anywhere; background: light-dark(#f2f5f9, #242b35); border-radius: 4px; }
+  .followup { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; }
+  .followup button { color: light-dark(#1d4382, #b9d2ff); background: Canvas; }
+  .followup span { font-size: .9rem; overflow-wrap: anywhere; }
+  .followup-choice { display: inline-flex; align-items: center; gap: 6px; min-block-size: 42px; }
+  .followup-choice input { inline-size: 1.15rem; block-size: 1.15rem; margin: 0; accent-color: light-dark(#1d4382, #b9d2ff); }
+  .followup-choice:has(input:disabled) { opacity: .56; }
+  #batch-bar:not([hidden]) { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+  #batch-bar { position: sticky; inset-block-start: 0; z-index: 1; background: Canvas; padding: 7px 9px;
+    margin-block-end: 10px; border: 1px solid light-dark(#c3cad4, #4a5260); border-radius: 8px; }
+  #batch-status { font-size: .9rem; overflow-wrap: anywhere; }
+  .test-followup { margin-top: 6px; }
+  #activity-section p:first-of-type { margin-top: 8px; }
+  #proposal-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-block: 8px 0; }
+  .verdict { font-weight: 700; }
+  [data-status="supported"] .verdict { color: light-dark(#145a3c, #a7e3bf); }
+  [data-status="contradicted"] .verdict { color: light-dark(#9b2317, #ffbbb1); }
+  [data-status="unverified"] .verdict, [data-status="partial"] .verdict { color: light-dark(#775300, #f5d67c); }
+  bdi, code, .reason { overflow-wrap: anywhere; }
+</style>
+<main>
+  <h1>اعتبارسنجی مستقل</h1>
+  <div class="row">
+    <div class="activity-heading">
+      <h2>آخرین فعالیت این گفت‌وگو</h2>
+      <p id="activity" hidden></p>
+    </div>
+    <button id="refresh" type="button" disabled>تازه‌سازی</button>
+    <button id="review" type="button" data-primary disabled>اعتبارسنجی</button>
+  </div>
+  <p id="notice" role="status" aria-live="polite"></p>
+  <details id="settings">
+    <summary>مدل بازبین</summary>
+    <div class="model-controls">
+      <label>مدل بازبین <select id="primary" dir="ltr" required><option value="">انتخاب مدل</option></select></label>
+      <label>مدل جایگزین، اگر نویسنده از مدل بازبین استفاده کند
+        <select id="fallback" dir="ltr"><option value="">بدون مدل جایگزین</option></select>
+      </label>
+      <button id="save-models" type="button">ذخیرهٔ مدل‌ها</button>
+    </div>
+  </details>
+  <section id="report" aria-label="گزارش فعالیت" hidden>
+    <div id="batch-bar" role="group" aria-label="ارسال یک‌جای یافته‌ها" hidden>
+      <button id="send-batch" type="button" data-primary disabled>ارسال موارد انتخاب‌شده</button>
+      <span id="batch-count" aria-live="polite"></span>
+      <span id="batch-status" role="status"></span>
+    </div>
+    <section id="overview" aria-labelledby="overview-title">
+      <h2 id="overview-title">خلاصهٔ گزارش</h2>
+      <p id="summary-count" aria-live="polite"></p>
+      <ul id="summary-facts"></ul>
+      <div id="requirements"></div>
+      <div id="summary-followup" hidden>
+        <button type="button" aria-describedby="summary-followup-note" disabled>ارسال به همین گفت‌وگو</button>
+        <span id="summary-followup-note"></span>
+      </div>
+    </section>
+    <details id="full-report">
+      <summary>نمایش گزارش کامل</summary>
+      <details class="report-section" id="checks-section" hidden>
+        <summary>داوری کلی بازبین<span class="section-count"></span></summary>
+        <ul id="checks" class="fold-list"></ul>
+      </details>
+      <details class="report-section" id="changes-section">
+        <summary>تغییرات فایل‌ها<span class="section-count"></span></summary>
+        <ul id="changes" class="file-list"></ul>
+        <details id="earlier-changes-section" hidden>
+          <summary>تغییرات پیش از ادامه<span class="section-count"></span></summary>
+          <ul id="earlier-changes" class="file-list"></ul>
+        </details>
+      </details>
+      <details class="report-section" id="tests-section" hidden>
+        <summary>اجرای تست‌ها<span class="section-count"></span></summary>
+        <ul id="tests" class="fold-list"></ul>
+      </details>
+      <details class="report-section" id="verifications-section" hidden>
+        <summary>بررسی‌های ثبت‌شده<span class="section-count"></span></summary>
+        <ul id="verifications" class="fold-list"></ul>
+      </details>
+      <details class="report-section" id="installations-section" hidden>
+        <summary>نصب و نسخهٔ افزونه<span class="section-count"></span></summary>
+        <ul id="installations" class="file-list"></ul>
+      </details>
+      <details class="report-section" id="sources-section" hidden>
+        <summary>فایل‌های مبنای بازبینی<span class="section-count"></span></summary>
+        <ul id="sources" class="file-list"></ul>
+      </details>
+      <details class="report-section" id="activity-section">
+        <summary>اطلاعات نوبت و محدودهٔ شواهد</summary>
+        <p id="phase"></p>
+        <p id="model-labels"></p>
+        <p id="history-note" hidden>شواهد این نوبت از تاریخچهٔ Codex بازیابی شده‌اند. فقط فایل‌ها و رویدادهایی که در همان زمان ثبت شده‌اند قابل بررسی‌اند.</p>
+        <p id="resume-note" hidden>این گزارش شواهد کار پیش از توقف را هم در بر می‌گیرد.</p>
+        <p id="resume-limit" hidden>شواهد اجرایی دو تلاش قبلی در این گزارش آمده است.</p>
+        <p id="scope-note" hidden></p>
+        <details id="proposal-section" hidden>
+          <summary>پیشنهاد تأییدشده در همین گفت‌وگو</summary>
+          <div id="proposal-text" dir="auto"></div>
+        </details>
+      </details>
+    </details>
+  </section>
+</main>
+<script>
+  const get = id => document.getElementById(id);
+  const activity = get('activity');
+  const refresh = get('refresh');
+  const review = get('review');
+  const notice = get('notice');
+  const fullReport = get('full-report');
+  const batchBar = get('batch-bar');
+  const batchButton = get('send-batch');
+  const batchCount = get('batch-count');
+  const batchStatus = get('batch-status');
+  const number = new Intl.NumberFormat('fa');
+  const controls = [refresh, get('primary'), get('fallback'), get('save-models')];
+  const pending = new Map();
+  const followupStates = new Map();
+  const followupActions = new WeakMap();
+  const selectedFollowups = new Set();
+  const sendingText = 'در حال ارسال…';
+  const unavailableText = 'ارسال مستقیم در این نسخه از Codex در دسترس نیست.';
+  let serial = 0;
+  let connected = false;
+  let messageSupported = false;
+  let detached = false;
+  let followupInFlight;
+  let followingReport;
+  let batchFeedback = '';
+  let panelGeneration = 0;
+  let busyNow = false;
+  let refreshing = false;
+  let awaitingReport = false;
+  let currentActivity;
+  let hostSuppliedPanel = false;
+  let receiveInitial;
+  const initialPanel = new Promise(resolve => { receiveInitial = resolve; });
+  const delay = duration => new Promise(resolve => setTimeout(resolve, duration));
+
+  function send(method, params, timeout = 120_000) {
+    const id = ++serial;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error('پاسخ افزونه دریافت نشد.'));
+      }, timeout);
+      pending.set(id, response => {
+        clearTimeout(timer);
+        if (response.error) reject(Object.assign(new Error(response.error.message), {rpcCode: response.error.code}));
+        else resolve(response.result);
+      });
+      window.parent.postMessage({jsonrpc: '2.0', id, method, params}, '*');
+    });
+  }
+
+  window.addEventListener('message', event => {
+    const response = event.data;
+    if (event.source !== window.parent || response?.jsonrpc !== '2.0') return;
+    if (response.method === 'ui/resource-teardown') {
+      detached = true;
+      updateFollowups();
+      if (response.id != null) {
+        window.parent.postMessage({jsonrpc: '2.0', id: response.id, result: {}}, '*');
+      }
+      return;
+    }
+    if (response.method === 'ui/notifications/tool-result') {
+      const data = (response.params?.result ?? response.params)?._meta;
+      if (typeof data?.threadBound === 'boolean' && Array.isArray(data.activities)) {
+        if (!hostSuppliedPanel) {
+          hostSuppliedPanel = true;
+          receiveInitial(data);
+        }
+        if (connected && (currentActivity || data.activities.length) && !sameActivity(currentActivity, data.activities[0])) {
+          panelGeneration++;
+          currentActivity = undefined;
+          clearFollowupReport();
+          get('report').hidden = true;
+          review.disabled = true;
+          updateFollowups();
+          void refreshInBackground();
+        }
+      }
+      return;
+    }
+    const handler = pending.get(response.id);
+    if (handler) {
+      pending.delete(response.id);
+      handler(response);
+    }
+  });
+
+  async function tool(name, args = {}, timeout) {
+    const result = await send('tools/call', {name, arguments: args}, timeout);
+    if (result.isError) throw new Error(result.content?.[0]?.text || 'درخواست ناموفق بود.');
+    return result._meta || {};
+  }
+
+  function node(tag, value) {
+    const element = document.createElement(tag);
+    element.textContent = value;
+    return element;
+  }
+
+  function sameActivity(left, right) {
+    return Boolean(left?.id && left.chatKey && left.evidenceKey && left.id === right?.id &&
+      left.chatKey === right.chatKey && left.evidenceKey === right.evidenceKey);
+  }
+
+  function canFollow(scope) {
+    return !detached && !busyNow && !document.hidden && !get('report').hidden &&
+      sameActivity(scope, currentActivity) && sameActivity(scope, followingReport);
+  }
+
+  function clearFollowupReport() {
+    followingReport = undefined;
+    selectedFollowups.clear();
+    batchFeedback = '';
+  }
+
+  function reportActions() {
+    return Array.from(get('report').querySelectorAll('.followup button'), button => followupActions.get(button));
+  }
+
+  function updateFollowups() {
+    const actions = reportActions();
+    const available = new Set(actions.map(action => action.key));
+    for (const key of selectedFollowups) {
+      if (!available.has(key)) selectedFollowups.delete(key);
+    }
+    const ready = messageSupported && canFollow(followingReport) && !followupInFlight;
+    for (const {button, checkbox, key, scope, status} of actions) {
+      const result = followupStates.get(key);
+      button.disabled = checkbox.disabled = !ready || !sameActivity(scope, followingReport) || !!result?.locked;
+      checkbox.checked = selectedFollowups.has(key);
+      const sending = !followupInFlight?.batch && followupInFlight?.keys.has(key);
+      const text = !messageSupported ? unavailableText : sending ? sendingText : result?.text || '';
+      if (status.textContent !== text) status.textContent = text;
+    }
+    batchBar.hidden = actions.length === 0;
+    batchButton.disabled = !ready || selectedFollowups.size === 0;
+    const count = number.format(selectedFollowups.size) + ' مورد انتخاب شده';
+    if (batchCount.textContent !== count) batchCount.textContent = count;
+    const sendingBatch = followupInFlight?.batch && sameActivity(followupInFlight.scope, followingReport);
+    const text = !messageSupported ? unavailableText : sendingBatch ? sendingText : batchFeedback;
+    if (batchStatus.textContent !== text) batchStatus.textContent = text;
+  }
+
+  function batchMessage(actions) {
+    const request = 'این موارد انتخاب‌شده از گزارش اعتبارسنجی را پیگیری کن. کارهای مشترک را یک‌بار انجام بده و نتیجهٔ هر مورد را با شاهد بگو.';
+    const items = actions.map((action, index) => (index + 1) + '. ' + action.batchText.replaceAll('\n', '\n   '));
+    return [request, ...items].join('\n\n');
+  }
+
+  async function submitFollowups(button, actions, batch = false) {
+    const scope = actions[0]?.scope;
+    if (button.disabled || !canFollow(scope) || followupInFlight ||
+        actions.some(action => !sameActivity(scope, action.scope) || followupStates.get(action.key)?.locked)) return;
+    const keys = new Set(actions.map(action => action.key));
+    followupInFlight = {keys, scope, batch};
+    const record = result => {
+      if (batch && sameActivity(scope, followingReport)) batchFeedback = result.text;
+      for (const key of keys) {
+        if (!batch || result.locked) followupStates.set(key, result);
+        if (result.locked) selectedFollowups.delete(key);
+      }
+    };
+    updateFollowups();
+    let dispatched = false;
+    try {
+      const latest = panelData(await tool('validation_panel', {}, 10_000));
+      if (!button.isConnected || !canFollow(scope) || !sameActivity(scope, latest.activities[0]) ||
+          (batch && actions.some(action => !selectedFollowups.has(action.key)))) {
+        record({text: 'گفت‌وگو یا گزارش عوض شده است. گزارش تازه را باز کن.'});
+        if (canFollow(scope)) await load(latest, true);
+        return;
+      }
+      dispatched = true;
+      const message = batch ? batchMessage(actions) : actions[0].message;
+      const result = await send('ui/message', {
+        role: 'user',
+        content: [{type: 'text', text: message}],
+        _meta: {'openai/message': {target: 'active', send: true}},
+      }, 60_000);
+      if (result?.isError === true) {
+        record({text: 'Codex ارسال پیام را رد کرد.'});
+      } else if (result && typeof result === 'object' && !Array.isArray(result) &&
+                 (result.isError === undefined || result.isError === false)) {
+        record({text: 'ارسال شد', locked: true});
+      } else {
+        record({text: 'تأیید ارسال از Codex نرسید. گفت‌وگو را بررسی کن.', locked: true});
+      }
+    } catch (error) {
+      const unsupported = dispatched && error.rpcCode === -32601;
+      const invalid = dispatched && [-32600, -32602].includes(error.rpcCode);
+      const changed = dispatched && /(?:composer was closed|widget.*no longer active|conversation changed)/i.test(error.message);
+      const text = unsupported ? 'ارسال مستقیم در این نسخه یا این پنل در دسترس نیست.'
+        : changed ? 'گفت‌وگو یا کادر پیام عوض شد. گفت‌وگو را بررسی کن.'
+        : invalid ? 'Codex درخواست ارسال را نپذیرفت.'
+        : dispatched ? 'Codex ارسال را تأیید نکرد. گفت‌وگو را بررسی کن.'
+        : 'مقصد پیام تأیید نشد. دوباره امتحان کن.';
+      record({text, locked: dispatched && !invalid});
+    } finally {
+      followupInFlight = undefined;
+      updateFollowups();
+      if (!sameActivity(currentActivity, followingReport)) void refreshInBackground();
+    }
+  }
+
+  function followupAction(message, scope, title, batchText = message) {
+    const row = node('div', '');
+    row.className = 'followup';
+    const choice = node('label', '');
+    choice.className = 'followup-choice';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.disabled = true;
+    checkbox.setAttribute('aria-label', 'انتخاب برای ارسال ' + title);
+    choice.append(checkbox, 'انتخاب');
+    const button = node('button', 'ارسال به همین گفت‌وگو');
+    button.type = 'button';
+    button.disabled = true;
+    const status = node('span', '');
+    status.setAttribute('role', 'status');
+    const key = JSON.stringify([scope.chatKey, scope.id, scope.evidenceKey, message]);
+    const action = {key, scope, message, batchText, status, button, checkbox};
+    followupActions.set(button, action);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.disabled) return;
+      if (checkbox.checked) selectedFollowups.add(key);
+      else selectedFollowups.delete(key);
+      batchFeedback = '';
+      updateFollowups();
+    });
+    button.addEventListener('click', () => void submitFollowups(button, [action]));
+    row.append(choice, button, status);
+    return row;
+  }
+
+  function fold(title, key, ...content) {
+    const details = document.createElement('details');
+    details.dataset.fold = key;
+    const summary = document.createElement('summary');
+    summary.append(title);
+    details.append(summary, ...content);
+    return details;
+  }
+
+  function replaceFolds(container, children) {
+    const open = new Set(Array.from(container.querySelectorAll('details[data-fold][open]'), el => el.dataset.fold));
+    container.replaceChildren(...children);
+    for (const details of container.querySelectorAll('details[data-fold]')) {
+      if (open.has(details.dataset.fold)) details.open = true;
+    }
+  }
+
+  function verificationTitle(check) {
+    const titles = {
+      known_review_outcomes: 'سنجش بازبین با نمونه‌های جواب‌معلوم',
+      itemized_summary_and_full_report: 'نمای خلاصه و گزارش کامل',
+      installed_itemized_report: 'خواندن گزارش از بستهٔ نصب‌شده',
+      resumed_changes_heading_and_model_calls: 'نمایش تغییرات پیش از ادامه',
+      independent_witness_and_report_sections: 'باز و بسته شدن بخش‌های گزارش',
+    };
+    return titles[check.check] || check.label || check.check;
+  }
+
+  function verificationResult(check) {
+    return check.result === 'passed' ? 'موفق' : 'ناموفق';
+  }
+
+  function evidenceText(entry) {
+    const value = entry.value;
+    if (entry.kind === 'source') return value.excerpt;
+    if (entry.kind === 'change') return value.patch || 'متن کامل تغییر ثبت نشده است.';
+    if (entry.kind === 'tool') {
+      const lines = [
+        value.test_summary,
+        Number.isInteger(value.exit_code) ? 'کد خروج ' + value.exit_code : '',
+        value.plugin_install ? 'نسخهٔ نصب‌شده ' + value.plugin_install.version : '',
+        value.test_package ? 'بستهٔ آزمایش‌شده ' + value.test_package.plugin_id + ' · ' + value.test_package.version : '',
+        ...(value.verifications || []).map(check => {
+          const counts = check.facts || {};
+          const score = Number.isInteger(counts.scenarios_passed) && Number.isInteger(counts.scenarios_total)
+            ? ' · ' + number.format(counts.scenarios_passed) + ' از ' + number.format(counts.scenarios_total) + ' سناریو'
+            : '';
+          return verificationTitle(check) + ' · ' + verificationResult(check) + score;
+        }),
+      ].filter(Boolean);
+      return lines.length ? lines.join('\n') : JSON.stringify(value, null, 2);
+    }
+    return value;
+  }
+
+  function itemEvidence(item, catalog, key) {
+    const body = node('ul', '');
+    body.className = 'fold-list evidence-body';
+    for (const ref of item.references) {
+      if (!Object.hasOwn(catalog, ref)) continue;
+      const entry = catalog[ref];
+      const work = item.workReferences?.includes(ref);
+      const claim = item.claimReferences?.includes(ref);
+      if (entry.kind === 'reply' && item.claim && claim && !work) continue;
+      const title = document.createDocumentFragment();
+      title.append(node('bdi', entry.label));
+      if (entry.beforeResume) title.append(' · پیش از ادامه');
+      if (work || claim) {
+        title.append(node('span', work && claim ? 'شاهد کار و ادعا' : work ? 'شاهد کار' : 'شاهد ادعا'));
+        title.lastChild.className = 'section-count';
+      }
+      const text = String((entry.kind === 'reply' && item.refusalQuote ? item.refusalQuote : evidenceText(entry)) ?? '');
+      const content = node('pre', text);
+      content.dir = entry.kind === 'change' ? 'ltr' : 'auto';
+      const row = node('li', '');
+      if (text.length > 480 || text.split('\n').length > 8) {
+        content.tabIndex = 0;
+        row.append(fold(title, key + ':' + ref, content));
+      } else {
+        const heading = document.createElement('h3');
+        heading.append(title);
+        row.append(heading, content);
+      }
+      body.append(row);
+    }
+    if (!body.children.length) {
+      body.append(node('li', item.claim
+        ? 'متن ادعا در همین بند آمده است. شاهد دیگری برای آن ثبت نشده است.'
+        : 'شاهدی برای این بند ثبت نشده است.'));
+    }
+    const details = fold('دیدن شاهد', key, body);
+    details.className = 'item-evidence';
+    const toggle = details.firstElementChild;
+    function label() {
+      toggle.textContent = details.open ? 'بستن شاهد' : 'دیدن شاهد';
+      toggle.setAttribute('aria-label', toggle.textContent + ' ' + item.requirement);
+    }
+    label();
+    details.addEventListener('toggle', label);
+    return details;
+  }
+
+  function renderOverview(result) {
+    const items = result.requirements || [];
+    const checks = result.summaryChecks || [];
+    const hasReview = Array.isArray(result.requirements) || result.checks.length > 0;
+    const count = get('summary-count');
+    const facts = [];
+    if (items.length) {
+      const attention = items.filter(item => item.needsAttention).length;
+      count.textContent = attention
+        ? number.format(attention) + ' مورد از ' + number.format(items.length) + ' بند نیاز به پیگیری دارد'
+        : number.format(items.length) + ' بند بررسی شد';
+    } else {
+      count.textContent = result.confirmation
+        ? (result.confirmedProposal ? 'پیشنهاد تأییدشده ثبت شده است. هنوز بندی از آن در گزارش نیست.'
+          : 'این نوبت یک تأیید کوتاه است. متن پیشنهاد قبلی در شواهد این گزارش در دسترس نیست.')
+        : checks.length ? number.format(checks.length) + ' داوری کلی ثبت شده است.'
+        : result.error ? 'بازبینی کامل نشد.'
+        : hasReview ? 'بازبین بندی برای بررسی ثبت نکرد.'
+        : 'هنوز داوری بازبین ثبت نشده است.';
+      const changes = new Set([...result.changes, ...(result.earlierChanges || [])].map(change => change.path)).size;
+      if (changes) facts.push(number.format(changes) + ' فایل با تغییر ثبت‌شده');
+      if (result.tests.length) facts.push(number.format(result.tests.length) + ' اجرای تست ثبت‌شده');
+    }
+    get('summary-facts').replaceChildren(...facts.map(fact => node('li', fact)));
+    const sorted = [...items].sort((a, b) => Number(b.needsAttention) - Number(a.needsAttention));
+    const cards = sorted.map((item, index) => {
+      const card = node('article', '');
+      card.dataset.attention = String(item.needsAttention);
+      const statuses = node('div', '');
+      statuses.className = 'item-status';
+      statuses.append(node('span', 'کار · ' + item.workLabel), node('span', 'ادعا · ' + item.claimLabel));
+      const reason = node('p', item.reason);
+      reason.className = 'reason';
+      card.append(node('h2', item.requirement), statuses, reason);
+      if (item.claim) {
+        const quote = node('p', '');
+        quote.append('متن ادعا ', node('bdi', '«' + item.claim + '»'));
+        card.append(quote);
+      }
+      if (item.references.length) {
+        card.append(itemEvidence(item, result.evidenceReferences || {}, 'witness-' + index + ':' + item.requirement));
+      }
+      if (item.followup) card.append(followupAction(item.followup, result.activity, item.requirement, item.batchFollowup));
+      return card;
+    });
+    for (const check of checks) {
+      const card = node('article', '');
+      card.dataset.status = check.status;
+      card.dataset.attention = String(Boolean(check.followup));
+      const verdict = node('p', check.verdict);
+      verdict.className = 'verdict';
+      const reason = node('p', check.reason);
+      reason.className = 'reason';
+      card.append(node('h2', check.label), verdict, reason);
+      if (check.followup) card.append(followupAction(check.followup, result.activity, check.label, check.batchFollowup));
+      cards.push(card);
+    }
+    let hasFollowup = items.some(item => item.followup) || checks.some(check => check.followup);
+    if (!hasFollowup) {
+      const failedRun = [...result.tests].reverse().find(test => test.followups?.length);
+      const retry = failedRun?.followups[0];
+      if (retry) {
+        const card = node('article', '');
+        card.dataset.attention = 'true';
+        const detail = node('p', '');
+        detail.append(node('bdi', retry.label), ' · ', node('bdi', retry.witness));
+        card.append(node('h2', 'اجرای ناموفق ثبت‌شده'), detail, followupAction(retry.message, result.activity, retry.label));
+        cards.push(card);
+        hasFollowup = true;
+      }
+    }
+    get('summary-followup').hidden = hasFollowup;
+    get('summary-followup-note').textContent = hasReview && !result.error ? 'موردی برای پیگیری نیست.'
+      : 'برای آماده‌شدن مورد پیگیری، اعتبارسنجی را بزن.';
+    replaceFolds(get('requirements'), cards);
+  }
+
+  function setSection(id, count, unit, hideEmpty = true) {
+    const section = get(id);
+    section.hidden = hideEmpty && !count;
+    section.querySelector(':scope > summary > .section-count').textContent = '· ' + number.format(count) + ' ' + unit;
+  }
+
+  function testRow(test, index, scope) {
+    const outcomes = {OK: 'موفق', FAILED: 'ناموفق', 'NO TESTS RAN': 'بدون اجرای تست'};
+    const run = test.test_summary?.match(/^Ran (\d+) tests? in [\d.]+s · (OK|FAILED|NO TESTS RAN)\b/);
+    const title = document.createDocumentFragment();
+    title.append(node('bdi', test.test_runner || test.test_command_family));
+    if (run) title.append(' · ', outcomes[run[2]], ' · ', number.format(Number(run[1])), ' تست');
+    else if (test.test_summary) title.append(' · ', node('bdi', test.test_summary));
+    if (Number.isInteger(test.exit_code)) title.append(' · کد خروج ', node('bdi', test.exit_code));
+    else if (!test.test_summary) title.append(' · نتیجه ثبت نشده');
+    if (test.test_package) title.append(' · روی بستهٔ ', node('bdi', test.test_package.version));
+    if (test.beforeResume) title.append(' · پیش از ادامه');
+
+    const content = [];
+    const followups = new Map((test.followups || []).map(entry => [entry.case, entry]));
+    function addFollowup(parent, entry) {
+      const witness = node('p', '');
+      witness.className = 'test-followup';
+      witness.append('شاهد ', node('bdi', entry.witness));
+      parent.append(witness, followupAction(entry.message, scope, entry.label));
+    }
+    if (run) {
+      const record = node('p', '');
+      record.append('خروجی تست‌گیرنده ', node('bdi', test.test_summary));
+      content.push(record);
+    }
+    if (test.test_cases?.length) {
+      const names = document.createElement('ul');
+      names.className = 'case-list';
+      const results = {ok: 'موفق', FAIL: 'ناموفق', ERROR: 'خطا', skipped: 'اجرا نشد',
+        'expected failure': 'شکست مورد انتظار', 'unexpected success': 'موفقیت خلاف انتظار'};
+      names.append(...test.test_cases.map(entry => {
+        const line = document.createElement('li');
+        line.append(node('bdi', entry.name), ' · ', results[entry.result] || entry.result);
+        const action = followups.get(entry.name);
+        if (action) {
+          addFollowup(line, action);
+          followups.delete(entry.name);
+        }
+        return line;
+      }));
+      content.push(names);
+    }
+    for (const entry of followups.values()) {
+      const block = node('div', '');
+      if (entry.case || entry.label !== (test.test_runner || test.test_command_family)) {
+        block.append(node('bdi', entry.label));
+      }
+      addFollowup(block, entry);
+      content.push(block);
+    }
+    const item = node('li', '');
+    item.append(content.length ? fold(title, 'test-' + index, ...content) : title);
+    return item;
+  }
+
+  function renderVerifications(records) {
+    const unique = new Map();
+    for (const check of records) {
+      const facts = Object.entries(check.facts || {}).sort();
+      const key = JSON.stringify([check.scope, check.check, check.result, facts]);
+      if (!unique.has(key)) unique.set(key, check);
+    }
+    const labels = {earlier_files: 'فایل پیش از ادامه', resumed_files: 'فایل پس از ادامه',
+      test_summaries: 'خلاصه‌های تست', install_receipts: 'رسیدهای نصب', saved_records_unchanged: 'حفظ رکوردهای اصلی',
+      test_cases_rendered: 'نمایش نتایج تست', partial_rendered: 'نمایش تأیید جزئی',
+      trusted_hooks: 'Hook تأییدشده', panel_ready: 'پنل آماده', native_desktop: 'رابط اصلی Desktop',
+      scenarios_total: 'کل سناریوها', scenarios_passed: 'سناریوهای موفق', scenarios_failed: 'سناریوهای ناموفق',
+      scenarios_unavailable: 'سناریوهای سنجیده‌نشده', live_model: 'مدل زنده',
+      installed_files_verified: 'فایل‌های نصب‌شدهٔ بررسی‌شده', version_patch: 'شمارهٔ اصلاح نسخه'};
+    setSection('verifications-section', unique.size, 'بررسی');
+    replaceFolds(get('verifications'), [...unique].map(([key, check]) => {
+      const facts = document.createElement('dl');
+      facts.className = 'facts';
+      for (const [name, value] of Object.entries(check.facts || {})) {
+        const shown = typeof value === 'boolean' ? (value ? 'بله' : 'خیر') : number.format(value);
+        facts.append(node('dt', labels[name] || name.replaceAll('_', ' ')), node('dd', shown));
+      }
+      const identifier = node('p', '');
+      if (check.label && check.label !== verificationTitle(check)) identifier.append(check.label, ' · ');
+      identifier.append(node('bdi', check.check));
+      const title = verificationTitle(check) + ' · ' + verificationResult(check);
+      const row = node('li', '');
+      row.append(fold(title, 'verification:' + key, identifier, facts));
+      return row;
+    }));
+  }
+
+  function renderChecks(checks, requirements) {
+    const paragraphs = text => (text || '').split(/\r?\n+/).map(part => part.trim()).filter(Boolean);
+    const identity = text => text.replace(/\s+/g, ' ');
+    const shown = new Set(requirements.flatMap(item => [
+      ...paragraphs(item.reason), ...paragraphs(item.claim),
+    ]).map(identity));
+    setSection('checks-section', checks.length, 'داوری');
+    replaceFolds(get('checks'), checks.map(check => {
+      const title = document.createDocumentFragment();
+      const verdict = node('span', check.verdict);
+      verdict.className = 'verdict';
+      title.append(check.label, ' · ', verdict);
+      const reasons = [];
+      for (const reason of paragraphs(check.reason)) {
+        const key = identity(reason);
+        if (shown.has(key)) continue;
+        shown.add(key);
+        const paragraph = node('p', reason);
+        paragraph.className = 'reason';
+        reasons.push(paragraph);
+      }
+      const row = node('li', '');
+      row.dataset.status = check.status;
+      row.append(reasons.length ? fold(title, 'check:' + check.label, ...reasons) : title);
+      return row;
+    }));
+  }
+
+  function render(result) {
+    renderOverview(result);
+    const marked = {added: 'اضافه شد', modified: 'تغییر کرد', deleted: 'حذف شد'};
+    get('phase').textContent = result.phase;
+    get('history-note').hidden = !result.fromHistory;
+    get('scope-note').hidden = !result.limitedFileCoverage && !result.sharedWorkspace;
+    get('scope-note').textContent = result.sharedWorkspace
+      ? 'در پوشهٔ مشترک، فهرست فایل‌ها بر اساس ویرایش‌های ثبت‌شدهٔ همین گفت‌وگو است.'
+      : 'در پوشهٔ بدون Git، تغییرات فایل‌هایی بررسی می‌شوند که ابزار ویرایش Codex ثبت کرده است.';
+    get('resume-note').hidden = !result.continued;
+    get('resume-limit').hidden = !result.olderPartsOmitted;
+    get('proposal-section').hidden = !result.confirmedProposal;
+    get('proposal-text').textContent = result.confirmedProposal || '';
+    const modelText = model => node('bdi', model || 'نامشخص');
+    get('model-labels').replaceChildren('نویسنده ', modelText(result.author), ' · بازبین ', modelText(result.reviewer));
+    setSection('sources-section', result.sources?.length || 0, 'مرجع', false);
+    get('sources-section').hidden = !result.hasSourceRecord;
+    get('sources').replaceChildren(...(result.sources?.length
+      ? result.sources.map(path => node('li', path))
+      : [node('li', 'دستورالعمل یا فایل مرجعی برای این نوبت ثبت نشده است.')]));
+    const formatChange = change => {
+      const item = node('li', '');
+      item.append(node('bdi', change.path), ` · ${marked[change.status] || change.status}`);
+      if (change.incomplete) item.append(' · شواهد تغییر ناقص است');
+      return item;
+    };
+    const changes = result.changes.map(formatChange);
+    get('changes').replaceChildren(...(changes.length ? changes : [node('li', 'در این بازه تغییری ثبت نشده است.')]));
+    const earlierChanges = (result.earlierChanges || []).map(formatChange);
+    const fileCount = new Set([...result.changes, ...(result.earlierChanges || [])].map(change => change.path)).size;
+    setSection('changes-section', fileCount, 'فایل', false);
+    setSection('earlier-changes-section', earlierChanges.length, 'فایل');
+    get('earlier-changes').replaceChildren(...earlierChanges);
+    setSection('tests-section', result.tests.length, 'اجرا');
+    replaceFolds(get('tests'), result.tests.map((test, index) => testRow(test, index, result.activity)));
+    const installations = [...new Map((result.installations || []).map(item =>
+      [JSON.stringify([item.plugin_id, item.version]), item]
+    )).values()];
+    setSection('installations-section', installations.length, 'نسخه');
+    get('installations').replaceChildren(...installations.map(install => {
+      const item = node('li', '');
+      item.append(node('bdi', install.plugin_id), ' · نسخهٔ ', node('bdi', install.version));
+      return item;
+    }));
+    renderVerifications(result.verifications || []);
+    renderChecks(result.checks, result.requirements || []);
+    followingReport = result.activity;
+    get('report').hidden = false;
+    updateFollowups();
+    awaitingReport = !result.fromHistory && !result.error && !result.checks.length;
+    notice.textContent = result.error ? `بررسی انجام نشد. ${result.error}`
+      : result.checks.length ? '' : result.fromHistory
+        ? (result.author ? 'فعالیت بازیابی شد. برای شروع بازبینی، اعتبارسنجی را بزن.'
+          : 'فعالیت بازیابی شد. مدل نویسنده در تاریخچهٔ این نوبت در دسترس نیست.')
+        : 'گزارش خودکار هنوز آماده نیست.';
+  }
+
+  async function busy(action, message) {
+    busyNow = true;
+    for (const control of [...controls, review]) control.disabled = true;
+    updateFollowups();
+    notice.textContent = message;
+    try {
+      await action();
+    } catch (error) {
+      notice.textContent = error.message;
+    } finally {
+      busyNow = false;
+      for (const control of controls) control.disabled = false;
+      review.disabled = !currentActivity;
+      updateFollowups();
+      if (!sameActivity(currentActivity, followingReport)) void refreshInBackground();
+    }
+  }
+
+  async function loadReport(recheck = false, background = false) {
+    if (!background) get('report').hidden = true;
+    const scope = currentActivity;
+    const generation = panelGeneration;
+    if (!scope) return;
+    const {report} = await tool('validation_report', {activity_id: scope.id, recheck}, background ? 10_000 : undefined);
+    if (generation === panelGeneration && sameActivity(scope, currentActivity) && (!background || !busyNow) && !detached) {
+      if (!sameActivity(scope, report?.activity)) {
+        clearFollowupReport();
+        awaitingReport = true;
+        updateFollowups();
+        return;
+      }
+      render(report);
+    }
+  }
+
+  async function connect() {
+    if (connected) return;
+    const host = await send('ui/initialize', {appInfo: {name: 'codex-validator', version: '0.1.23'},
+      appCapabilities: {}, protocolVersion: '2026-01-26'}, 10_000);
+    const messaging = host?.hostCapabilities?.experimental?.['openai/message'];
+    messageSupported = messaging != null && typeof messaging === 'object' && !Array.isArray(messaging);
+    connected = true;
+    window.parent.postMessage({jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {}}, '*');
+  }
+
+  function panelData(data) {
+    if (typeof data?.threadBound !== 'boolean' || !Array.isArray(data.activities) ||
+        data.activities.length > 1 || (!data.threadBound && data.activities.length)) {
+      currentActivity = undefined;
+      clearFollowupReport();
+      activity.hidden = true;
+      get('report').hidden = true;
+      review.disabled = true;
+      throw new Error('دامنهٔ گزارش دریافت نشد. پنل را کنار همان گفت‌وگو دوباره باز کن.');
+    }
+    return data;
+  }
+
+  async function load(initialData, background = false) {
+    const generation = panelGeneration;
+    const supplied = initialData ?? await tool('validation_panel', {}, 10_000);
+    if (detached || generation !== panelGeneration || (background && busyNow)) return;
+    const data = panelData(supplied);
+    const previous = currentActivity;
+    const {threadBound, activities, models = [], modelOptions = models.map(id => ({id, label: id}))} = data;
+    if (!background) {
+      for (const [field, title] of [['primary', 'انتخاب مدل'], ['fallback', 'بدون مدل جایگزین']]) {
+        get(field).replaceChildren(new Option(title, ''), ...modelOptions.map(model => new Option(model.label, model.id)));
+      }
+      get('primary').value = models[0] || '';
+      get('fallback').value = models[1] || '';
+      if (!models.length) get('settings').open = true;
+    }
+    currentActivity = activities[0];
+    review.disabled = !currentActivity;
+    activity.hidden = !currentActivity;
+    if (!currentActivity) {
+      awaitingReport = false;
+      clearFollowupReport();
+      activity.replaceChildren();
+      get('report').hidden = true;
+      notice.textContent = threadBound
+        ? 'هنوز نوبت قابل‌بررسی برای این گفت‌وگو در تاریخچهٔ محلی پیدا نشد.'
+        : 'اعتبارسنجی مستقل را از پنل کنار گفت‌وگوی موردنظر باز کن.';
+      return;
+    }
+    const changed = !sameActivity(currentActivity, previous);
+    if (changed) {
+      clearFollowupReport();
+      get('report').hidden = true;
+      for (const details of get('report').querySelectorAll('details[open]')) details.open = false;
+    }
+    if (changed || !background) {
+      activity.replaceChildren(node('bdi', currentActivity.project), ' · ', node('bdi', currentActivity.request));
+    }
+    if (currentActivity.id !== previous?.id) {
+      fullReport.open = false;
+      get('report').hidden = true;
+    }
+    if (!background || awaitingReport || changed || !sameActivity(currentActivity, followingReport)) {
+      await loadReport(false, background);
+    }
+  }
+
+  refresh.addEventListener('click', () => busy(async () => {
+    await connect();
+    await load();
+  }, 'در حال دریافت فعالیت‌ها'));
+  batchButton.addEventListener('click', () => {
+    const selected = new Map(reportActions()
+      .filter(action => selectedFollowups.has(action.key))
+      .map(action => [action.key, action]));
+    void submitFollowups(batchButton, [...selected.values()], true);
+  });
+  review.addEventListener('click', () => busy(() => loadReport(true), 'مدل بازبین در حال بررسی است'));
+  get('save-models').addEventListener('click', () => {
+    if (!get('primary').reportValidity()) return;
+    const models = [get('primary').value.trim(), get('fallback').value.trim()].filter(Boolean);
+    busy(async () => {
+      await tool('validation_models', {models});
+      get('settings').open = false;
+      notice.textContent = 'مدل‌ها ذخیره شدند.';
+    }, 'در حال ذخیره');
+  });
+
+  busy(async () => {
+    await connect();
+    const initialData = await Promise.any([
+      Promise.race([initialPanel, delay(10_000).then(() => { throw new Error('Host response timed out'); })]),
+      delay(750).then(() => hostSuppliedPanel ? initialPanel : tool('validation_panel', {}, 10_000)).then(panelData),
+    ]).catch(() => { throw new Error('اطلاعات پنل دریافت نشد. تازه‌سازی را امتحان کن.'); });
+    await load(initialData);
+  }, 'در حال باز کردن پنل');
+
+  async function refreshInBackground() {
+    if (!connected || detached || busyNow || refreshing || followupInFlight || document.hidden) return;
+    const generation = panelGeneration;
+    refreshing = true;
+    try {
+      await load(undefined, true);
+    } catch {
+      // A transient background failure leaves the last visible report available.
+    } finally {
+      refreshing = false;
+      if (generation !== panelGeneration) void refreshInBackground();
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    updateFollowups();
+    void refreshInBackground();
+  });
+  setInterval(refreshInBackground, 12_000);
+</script>
+</html>
